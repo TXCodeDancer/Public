@@ -3,17 +3,17 @@ using System.IO;
 
 class Program
 {
-    private static readonly string wslFlag = "-wsl";
+    private static readonly string winFlag = "-win";
     private static readonly char volumeSeparator = ':';
     
     static void Main(string[] args)
     {
-        bool isWsl = false;
+        bool isWin = false;
 
         if (args.Length == 1)
         {
-            isWsl = IsWsl(args[0]);
-            if (isWsl)
+            isWin = IsWin(args[0]);
+            if (isWin)
             {
                 args[0] = string.Empty; // Empty input to ready for user input
             }
@@ -21,14 +21,18 @@ class Program
 
         while (args.Length == 0 || string.IsNullOrEmpty(args[0]))
         {
-            Console.WriteLine("Enter the path of the file or directory. Enter <path> <-wsl> to convert to WSL style path:");
+            if(isWin)
+                Console.WriteLine("Enter the path of the file or directory:");
+            else
+                Console.WriteLine("Enter the path of the file or directory. Use <path> <-win> to convert to Windows style path:");
+
             var input = Console.ReadLine();
             if (!string.IsNullOrEmpty(input))
             {
                 args = input.Split();
                 if (args.Length == 2)
                 {
-                    isWsl = IsWsl(args[1]);
+                    isWin = IsWin(args[1]);
                 }
             }
         }
@@ -41,7 +45,7 @@ class Program
                 inputPath = inputPath.Replace($"{Path.GetFullPath(".")}/", ""); // This is only needed when running from linux (WSL) as that system add the current directory to the full file path.
             }
 
-            var outputPath = isWsl ? ConvertToWslPath(inputPath) : ConvertPath(inputPath);
+            var outputPath = isWin ? ConvertPath(inputPath) : ConvertToWslPath(inputPath);
 
             Console.WriteLine("Original Path: " + inputPath);
             Console.WriteLine("Converted Path: " + outputPath);
@@ -52,9 +56,9 @@ class Program
         }    
     }
 
-    private static bool IsWsl(string flag)
+    private static bool IsWin(string flag)
     {
-        return flag.Equals(wslFlag);
+        return flag.Equals(winFlag);
     }
 
     private static string ConvertPath(string windowsPath)
