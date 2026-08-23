@@ -52,9 +52,12 @@ AnsiConsole.MarkupLine($"[bold]Break-even date:[/] {breakEven}");
 
 static PensionPlan ReadPlan(string name)
 {
+    var defaultYears = name == "Plan A" ? 67 : 0;
+
     var years = AnsiConsole.Prompt(
         new TextPrompt<int>($"[yellow]{name} retirement age in years[/]:")
             .PromptStyle("yellow")
+            .DefaultValue(defaultYears)
             .Validate(value => value >= 0 ? ValidationResult.Success() : ValidationResult.Error("Years must be zero or more.")));
 
     var months = AnsiConsole.Prompt(
