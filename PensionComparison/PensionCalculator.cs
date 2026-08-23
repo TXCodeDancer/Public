@@ -85,6 +85,9 @@ public static class PensionCalculator
 
         for (var currentDate = startDate; currentDate <= finalPayoutDate; currentDate = currentDate.AddMonths(1))
         {
+            previousPlanAAccumulator = planAAccumulator;
+            previousPlanBAccumulator = planBAccumulator;
+
             if (currentDate >= planARetirementDate)
                 planAAccumulator += planA.MonthlyPayout;
 
@@ -94,12 +97,9 @@ public static class PensionCalculator
             var bothPlansStarted = currentDate >= planARetirementDate && currentDate >= planBRetirementDate;
             if (breakEvenDate is null && bothPlansStarted)
             {
-                var planAWasLower = previousPlanAAccumulator <= previousPlanBAccumulator;
-                var planBWasLower = previousPlanBAccumulator <= previousPlanAAccumulator;
-
-                var planACaughtUp = planAWasLower && planAAccumulator >= planBAccumulator;
-                var planBCaughtUp = planBWasLower && planBAccumulator >= planAAccumulator;
                 var totalsEqual = planAAccumulator == planBAccumulator;
+                var planACaughtUp = previousPlanAAccumulator < previousPlanBAccumulator && planAAccumulator >= planBAccumulator;
+                var planBCaughtUp = previousPlanBAccumulator < previousPlanAAccumulator && planBAccumulator >= planAAccumulator;
 
                 if (totalsEqual || planACaughtUp || planBCaughtUp)
                 {
@@ -107,9 +107,6 @@ public static class PensionCalculator
                     breakEvenAmount = Math.Max(planAAccumulator, planBAccumulator);
                 }
             }
-
-            previousPlanAAccumulator = planAAccumulator;
-            previousPlanBAccumulator = planBAccumulator;
         }
 
         var breakEvenAgeYears = 0;
