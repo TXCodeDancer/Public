@@ -15,7 +15,7 @@ var planB = ReadPlan("Plan B");
 var finalPayoutAgeYears = AnsiConsole.Prompt(
     new TextPrompt<int>("[green]Final payout age in years[/]:")
         .PromptStyle("green")
-        .DefaultValue(0)
+        .DefaultValue(85)
         .Validate(value => value >= 0 ? ValidationResult.Success() : ValidationResult.Error("Years must be zero or more.")));
 
 var finalPayoutAgeMonths = AnsiConsole.Prompt(
