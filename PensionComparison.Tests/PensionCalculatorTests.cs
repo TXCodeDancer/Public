@@ -16,6 +16,16 @@ public class PensionCalculatorTests
     }
 
     [Fact]
+    public void GetAgeDate_UsesYearsAndMonthsToComputeDate()
+    {
+        var birthDate = new DateOnly(1962, 8, 15);
+
+        var result = PensionCalculator.GetAgeDate(birthDate, 65, 0);
+
+        Assert.Equal(new DateOnly(2027, 8, 15), result);
+    }
+
+    [Fact]
     public void Compare_ReportsBreakEvenWhenCumulativePayoutsMatch()
     {
         var birthDate = new DateOnly(1960, 1, 1);

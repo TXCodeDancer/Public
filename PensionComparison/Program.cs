@@ -11,12 +11,20 @@ var birthDate = AnsiConsole.Prompt(
 
 var planA = ReadPlan("Plan A");
 var planB = ReadPlan("Plan B");
-var finalPayoutDate = AnsiConsole.Prompt(
-    new TextPrompt<DateOnly>("[green]Final payout date[/]:")
+
+var finalPayoutAgeYears = AnsiConsole.Prompt(
+    new TextPrompt<int>("[green]Final payout age in years[/]:")
         .PromptStyle("green")
-        .Validate(value => value >= birthDate
-            ? ValidationResult.Success()
-            : ValidationResult.Error("Final payout date must be on or after the birth date.")));
+        .DefaultValue(0)
+        .Validate(value => value >= 0 ? ValidationResult.Success() : ValidationResult.Error("Years must be zero or more.")));
+
+var finalPayoutAgeMonths = AnsiConsole.Prompt(
+    new TextPrompt<int>("[green]Final payout age in months[/]:")
+        .PromptStyle("green")
+        .DefaultValue(0)
+        .Validate(value => value is >= 0 and < 12 ? ValidationResult.Success() : ValidationResult.Error("Months must be between 0 and 11.")));
+
+var finalPayoutDate = PensionCalculator.GetAgeDate(birthDate, finalPayoutAgeYears, finalPayoutAgeMonths);
 
 var result = PensionCalculator.Compare(planA, planB, birthDate, finalPayoutDate);
 
@@ -52,6 +60,7 @@ static PensionPlan ReadPlan(string name)
     var months = AnsiConsole.Prompt(
         new TextPrompt<int>($"[yellow]{name} retirement age in months[/]:")
             .PromptStyle("yellow")
+            .DefaultValue(0)
             .Validate(value => value is >= 0 and < 12 ? ValidationResult.Success() : ValidationResult.Error("Months must be between 0 and 11.")));
 
     var monthlyPayout = AnsiConsole.Prompt(

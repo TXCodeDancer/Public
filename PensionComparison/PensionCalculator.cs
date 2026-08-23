@@ -20,6 +20,17 @@ public static class PensionCalculator
         return birthDate.AddYears(plan.RetirementAgeYears).AddMonths(plan.RetirementAgeMonths);
     }
 
+    public static DateOnly GetAgeDate(DateOnly birthDate, int ageYears, int ageMonths)
+    {
+        if (ageYears < 0)
+            throw new ArgumentOutOfRangeException(nameof(ageYears), "Age in years must be zero or greater.");
+
+        if (ageMonths < 0 || ageMonths >= 12)
+            throw new ArgumentOutOfRangeException(nameof(ageMonths), "Age in months must be between 0 and 11.");
+
+        return birthDate.AddYears(ageYears).AddMonths(ageMonths);
+    }
+
     public static int CountMonthsBetween(DateOnly start, DateOnly end)
     {
         if (end < start)
