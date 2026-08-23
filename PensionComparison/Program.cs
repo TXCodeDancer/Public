@@ -2,62 +2,82 @@
 using Spectre.Console;
 using PensionComparison;
 
-var birthDate = AnsiConsole.Prompt(
-    new TextPrompt<DateOnly>("[cyan]Date of birth[/]:")
-        .PromptStyle("cyan")
-        .Validate(value => value <= DateOnly.FromDateTime(DateTime.Today)
-            ? ValidationResult.Success()
-            : ValidationResult.Error("Birth date must be today or earlier.")));
+var defaultsPath = Path.Combine(AppContext.BaseDirectory, "comparison-defaults.json");
+var defaults = ComparisonDefaults.Load(defaultsPath);
 
-var planA = ReadPlan("Plan A");
-var planB = ReadPlan("Plan B");
-
-var finalPayoutAgeYears = AnsiConsole.Prompt(
-    new TextPrompt<int>("[green]Final payout age in years[/]:")
-        .PromptStyle("green")
-        .DefaultValue(85)
-        .Validate(value => value >= 0 ? ValidationResult.Success() : ValidationResult.Error("Years must be zero or more.")));
-
-var finalPayoutAgeMonths = AnsiConsole.Prompt(
-    new TextPrompt<int>("[green]Final payout age in months[/]:")
-        .PromptStyle("green")
-        .DefaultValue(0)
-        .Validate(value => value is >= 0 and < 12 ? ValidationResult.Success() : ValidationResult.Error("Months must be between 0 and 11.")));
-
-var finalPayoutDate = PensionCalculator.GetAgeDate(birthDate, finalPayoutAgeYears, finalPayoutAgeMonths);
-
-var result = PensionCalculator.Compare(planA, planB, birthDate, finalPayoutDate);
-
-AnsiConsole.Write(new Rule("[bold cyan]Pension Comparison[/]").RuleStyle("cyan"));
-
-var table = new Table();
-table.Border(TableBorder.Rounded);
-table.AddColumn("Plan");
-table.AddColumn("Retirement age");
-table.AddColumn("Retirement date");
-table.AddColumn("Monthly payout");
-table.AddColumn("Total payout to final date");
-
-table.AddRow(planA.Name, FormatAge(planA), result.PlanARetirementDate.ToString("yyyy-MM-dd"), planA.MonthlyPayout.ToString("C", CultureInfo.CurrentCulture), result.PlanATotalPayout.ToString("C", CultureInfo.CurrentCulture));
-table.AddRow(planB.Name, FormatAge(planB), result.PlanBRetirementDate.ToString("yyyy-MM-dd"), planB.MonthlyPayout.ToString("C", CultureInfo.CurrentCulture), result.PlanBTotalPayout.ToString("C", CultureInfo.CurrentCulture));
-
-AnsiConsole.Write(table);
-
-AnsiConsole.WriteLine();
-var breakEven = result.BreakEvenDate is null
-    ? "No break-even date"
-    : $"{result.BreakEvenDate:yyyy-MM-dd} (age {result.BreakEvenAgeYears} years {result.BreakEvenAgeMonths} months)";
-
-AnsiConsole.MarkupLine($"[bold]Break-even date:[/] {breakEven}");
-
-if (result.BreakEvenDate is not null)
+while (true)
 {
-    AnsiConsole.MarkupLine($"[bold]Break-even amount:[/] {result.BreakEvenAmount:C}");
+    var birthDate = AnsiConsole.Prompt(
+        new TextPrompt<DateOnly>("[cyan]Date of birth[/]:")
+            .PromptStyle("cyan")
+            .DefaultValue(defaults.BirthDate)
+            .Validate(value => value <= DateOnly.FromDateTime(DateTime.Today)
+                ? ValidationResult.Success()
+                : ValidationResult.Error("Birth date must be today or earlier.")));
+
+    var planA = ReadPlan("Plan A", defaults.PlanA);
+    var planB = ReadPlan("Plan B", defaults.PlanB);
+
+    var finalPayoutAgeYears = AnsiConsole.Prompt(
+        new TextPrompt<int>("[green]Final payout age in years[/]:")
+            .PromptStyle("green")
+            .DefaultValue(defaults.FinalPayoutAgeYears)
+            .Validate(value => value >= 0 ? ValidationResult.Success() : ValidationResult.Error("Years must be zero or more.")));
+
+    var finalPayoutAgeMonths = AnsiConsole.Prompt(
+        new TextPrompt<int>("[green]Final payout age in months[/]:")
+            .PromptStyle("green")
+            .DefaultValue(defaults.FinalPayoutAgeMonths)
+            .Validate(value => value is >= 0 and < 12 ? ValidationResult.Success() : ValidationResult.Error("Months must be between 0 and 11.")));
+
+    var finalPayoutDate = PensionCalculator.GetAgeDate(birthDate, finalPayoutAgeYears, finalPayoutAgeMonths);
+
+    var result = PensionCalculator.Compare(planA, planB, birthDate, finalPayoutDate);
+
+    defaults = new ComparisonDefaults(
+        birthDate,
+        new PensionPlanDefaults(planA.RetirementAgeYears, planA.RetirementAgeMonths, planA.MonthlyPayout),
+        new PensionPlanDefaults(planB.RetirementAgeYears, planB.RetirementAgeMonths, planB.MonthlyPayout),
+        finalPayoutAgeYears,
+        finalPayoutAgeMonths);
+
+    ComparisonDefaults.Save(defaultsPath, defaults);
+
+    AnsiConsole.Write(new Rule("[bold cyan]Pension Comparison[/]").RuleStyle("cyan"));
+
+    var table = new Table();
+    table.Border(TableBorder.Rounded);
+    table.AddColumn("Plan");
+    table.AddColumn("Retirement age");
+    table.AddColumn("Retirement date");
+    table.AddColumn("Monthly payout");
+    table.AddColumn("Total payout to final date");
+
+    table.AddRow(planA.Name, FormatAge(planA), result.PlanARetirementDate.ToString("yyyy-MM-dd"), planA.MonthlyPayout.ToString("C", CultureInfo.CurrentCulture), result.PlanATotalPayout.ToString("C", CultureInfo.CurrentCulture));
+    table.AddRow(planB.Name, FormatAge(planB), result.PlanBRetirementDate.ToString("yyyy-MM-dd"), planB.MonthlyPayout.ToString("C", CultureInfo.CurrentCulture), result.PlanBTotalPayout.ToString("C", CultureInfo.CurrentCulture));
+
+    AnsiConsole.Write(table);
+
+    AnsiConsole.WriteLine();
+    var breakEven = result.BreakEvenDate is null
+        ? "No break-even date"
+        : $"{result.BreakEvenDate:yyyy-MM-dd} (age {result.BreakEvenAgeYears} years {result.BreakEvenAgeMonths} months)";
+
+    AnsiConsole.MarkupLine($"[bold]Break-even date:[/] {breakEven}");
+
+    if (result.BreakEvenDate is not null)
+    {
+        AnsiConsole.MarkupLine($"[bold]Break-even amount:[/] {result.BreakEvenAmount:C}");
+    }
+
+    var repeat = AnsiConsole.Confirm("[green]Run another comparison?[/]");
+    if (!repeat)
+        break;
 }
 
-static PensionPlan ReadPlan(string name)
+static PensionPlan ReadPlan(string name, PensionPlanDefaults defaults)
 {
-    var defaultYears = name == "Plan A" ? 67 : 0;
+    var defaultYears = name == "Plan A" ? defaults.RetirementAgeYears : defaults.RetirementAgeYears;
 
     var years = AnsiConsole.Prompt(
         new TextPrompt<int>($"[yellow]{name} retirement age in years[/]:")
@@ -68,12 +88,13 @@ static PensionPlan ReadPlan(string name)
     var months = AnsiConsole.Prompt(
         new TextPrompt<int>($"[yellow]{name} retirement age in months[/]:")
             .PromptStyle("yellow")
-            .DefaultValue(0)
+            .DefaultValue(defaults.RetirementAgeMonths)
             .Validate(value => value is >= 0 and < 12 ? ValidationResult.Success() : ValidationResult.Error("Months must be between 0 and 11.")));
 
     var monthlyPayout = AnsiConsole.Prompt(
         new TextPrompt<decimal>($"[yellow]{name} monthly payout[/]:")
             .PromptStyle("yellow")
+            .DefaultValue(defaults.MonthlyPayout)
             .Validate(value => value >= 0m ? ValidationResult.Success() : ValidationResult.Error("Monthly payout must be zero or more.")));
 
     return new PensionPlan(name, years, months, monthlyPayout);

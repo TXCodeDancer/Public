@@ -26,6 +26,21 @@ public class PensionCalculatorTests
     }
 
     [Fact]
+    public void Compare_IsOrderIndependent_WhenPlansAreReversed()
+    {
+        var birthDate = new DateOnly(1962, 11, 18);
+        var planA = new PensionPlan("Plan A", 67, 0, 3963m);
+        var planB = new PensionPlan("Plan B", 70, 0, 4969m);
+        var finalDate = new DateOnly(2050, 12, 31);
+
+        var resultAFirst = PensionCalculator.Compare(planA, planB, birthDate, finalDate);
+        var resultBFirst = PensionCalculator.Compare(planB, planA, birthDate, finalDate);
+
+        Assert.Equal(resultAFirst.BreakEvenDate, resultBFirst.BreakEvenDate);
+        Assert.Equal(resultAFirst.BreakEvenAmount, resultBFirst.BreakEvenAmount);
+    }
+
+    [Fact]
     public void Compare_ReportsBreakEvenWhenCumulativePayoutsMatch()
     {
         var birthDate = new DateOnly(1960, 1, 1);
