@@ -65,10 +65,11 @@ while (true)
 
     AnsiConsole.MarkupLine($"[bold]Break-even date:[/] {breakEven}");
 
-    if (result.BreakEvenDate is not null)
-    {
-        AnsiConsole.MarkupLine($"[bold]Break-even amount:[/] {result.BreakEvenAmount:C}");
-    }
+    var breakEvenAmount = result.BreakEvenDate is null ? "N/A" : result.BreakEvenAmount.ToString("C", CultureInfo.CurrentCulture);
+    AnsiConsole.MarkupLine($"[bold]Break-even amount:[/] {breakEvenAmount}");
+
+    var finalDatePayoutDifference = Math.Abs(result.PlanATotalPayout - result.PlanBTotalPayout);
+    AnsiConsole.MarkupLine($"[bold]Total payout difference at final date:[/] {finalDatePayoutDifference:C}");
 
     var repeat = AnsiConsole.Confirm("[green]Run another comparison?[/]");
     if (!repeat)
