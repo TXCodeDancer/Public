@@ -50,6 +50,11 @@ var breakEven = result.BreakEvenDate is null
 
 AnsiConsole.MarkupLine($"[bold]Break-even date:[/] {breakEven}");
 
+if (result.BreakEvenDate is not null)
+{
+    AnsiConsole.MarkupLine($"[bold]Break-even amount:[/] {result.BreakEvenAmount:C}");
+}
+
 static PensionPlan ReadPlan(string name)
 {
     var defaultYears = name == "Plan A" ? 67 : 0;

@@ -11,7 +11,8 @@ public sealed record PensionComparisonResult(
     decimal PlanBTotalPayout,
     DateOnly? BreakEvenDate,
     int BreakEvenAgeYears,
-    int BreakEvenAgeMonths);
+    int BreakEvenAgeMonths,
+    decimal BreakEvenAmount);
 
 public static class PensionCalculator
 {
@@ -74,10 +75,7 @@ public static class PensionCalculator
         var planBTotalPayout = CalculateTotalPayout(planBRetirementDate, finalPayoutDate, planB.MonthlyPayout);
 
         DateOnly? breakEvenDate = null;
-        var totalMonths = Math.Max(0, CountMonthsBetween(
-            new DateOnly(Math.Min(planARetirementDate.Year, planBRetirementDate.Year), 1, 1),
-            finalPayoutDate));
-
+        decimal breakEvenAmount = 0m;
         decimal planAAccumulator = 0m;
         decimal planBAccumulator = 0m;
 
@@ -94,6 +92,7 @@ public static class PensionCalculator
             if (breakEvenDate is null && planAAccumulator >= planBAccumulator && planAAccumulator > 0m && planBAccumulator > 0m)
             {
                 breakEvenDate = currentDate;
+                breakEvenAmount = planAAccumulator;
             }
         }
 
@@ -118,6 +117,7 @@ public static class PensionCalculator
             planBTotalPayout,
             breakEvenDate,
             breakEvenAgeYears,
-            breakEvenAgeMonths);
+            breakEvenAgeMonths,
+            breakEvenAmount);
     }
 }
